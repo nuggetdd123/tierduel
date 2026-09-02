@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⛏️ TierDuel</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="pixel-overlay"></div>
+
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="pixel-icon">⛏️</span>
+                <span class="logo-text">TierDuel</span>
+                <span class="logo-subtitle">Guess the Tier</span>
+            </div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#" data-view="game" class="nav-link active">🎮 Game</a></li>
+                <li><a href="#" data-view="upload" class="nav-link">📤 Upload</a></li>
+                <li><a href="#" data-view="duels" class="nav-link">⚔️ Duels</a></li>
+                <li><a href="#" data-view="moderator" class="nav-link" id="moderatorNav" style="display:none;">🛡️ Mod</a></li>
+                <li><a href="#" id="authButton" class="nav-link">🔐 Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main id="app">
+        <!-- AUTH -->
+        <section id="authSection" class="view-section">
+            <div class="pixel-border">
+                <div id="loginForm" class="auth-form">
+                    <h2 class="pixel-title">🔐 LOGIN</h2>
+                    <div class="form-group">
+                        <label class="pixel-label">USERNAME</label>
+                        <input type="text" id="loginUsername" placeholder="Enter username" class="pixel-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="pixel-label">PASSWORD</label>
+                        <input type="password" id="loginPassword" placeholder="Enter password" class="pixel-input">
+                    </div>
+                    <button id="loginBtn" class="pixel-btn pixel-btn-primary">▶ LOGIN</button>
+                    <p class="auth-switch">No account? <a href="#" id="showRegister" class="pixel-link">Register</a></p>
+                </div>
+                <div id="registerForm" class="auth-form" style="display:none;">
+                    <h2 class="pixel-title">📝 REGISTER</h2>
+                    <div class="form-group">
+                        <label class="pixel-label">USERNAME</label>
+                        <input type="text" id="registerUsername" placeholder="Choose username" class="pixel-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="pixel-label">PASSWORD</label>
+                        <input type="password" id="registerPassword" placeholder="Min 6 characters" class="pixel-input">
+                    </div>
+                    <button id="registerBtn" class="pixel-btn pixel-btn-primary">▶ REGISTER</button>
+                    <p class="auth-switch">Already registered? <a href="#" id="showLogin" class="pixel-link">Login</a></p>
+                </div>
+                <div id="authMessage" class="auth-message" style="display:none;"></div>
+            </div>
+        </section>
+
+        <!-- GAME -->
+        <section id="gameView" class="view-section" style="display:none;">
+            <div class="pixel-border game-dashboard">
+                <div class="game-top-bar">
+                    <h2 class="pixel-title">🎮 GUESS THE TIER</h2>
+                    <div class="game-stats">
+                        <div id="gameScoreDisplay" class="pixel-score">SCORE: 0</div>
+                        <div id="gameRound" class="pixel-round">ROUND 0/10</div>
+                        <div id="gameStreak" class="pixel-streak">🔥 STREAK: 0</div>
+                    </div>
+                </div>
+
+                <div class="game-area">
+                    <div class="game-video-section">
+                        <div class="video-wrapper">
+                            <div id="gameVideoContainer" style="position:relative;width:100%;padding-bottom:56.25%;background:#000;border:2px solid var(--line);">
+                                <iframe id="gameVideo" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe>
+                                <div class="video-overlay">
+                                    <span class="pixel-badge">▶ WATCH</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="gameStatus" class="game-status">▶ CLICK "START GAME" TO BEGIN</div>
+                    </div>
+
+                    <div class="game-controls-section">
+                        <div class="controls-panel">
+                            <div class="controls-header">
+                                <span class="pixel-subtitle">⚔️ GUESS THE TIER</span>
+                            </div>
+                            <div id="gameOptions" class="game-options"></div>
+                            <div class="controls-footer">
+                                <div id="gameResult" class="game-result" style="display:none;"></div>
+                                <div class="button-row">
+                                    <button id="startGameBtn" class="pixel-btn pixel-btn-primary">▶ START</button>
+                                    <button id="nextRoundBtn" class="pixel-btn pixel-btn-secondary" style="display:none;">▶ NEXT</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- UPLOAD -->
+        <section id="uploadView" class="view-section" style="display:none;">
+            <div class="pixel-border">
+                <div class="view-header">
+                    <h2 class="pixel-title">📤 UPLOAD CLIP</h2>
+                </div>
+                <div id="uploadForm" class="upload-form">
+                    <div class="form-group">
+                        <label class="pixel-label">📹 YOUTUBE URL</label>
+                        <input type="url" id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." class="pixel-input">
+                        <small style="color:#4a5060;font-size:0.65rem;display:block;margin-top:0.3rem;">
+                            📌 Upload your clip to YouTube (unlisted) and paste the URL here.
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label class="pixel-label">🏆 CLAIMED TIER</label>
+                        <select id="tierSelect" class="pixel-input">
+                            <option value="HT1">HT1 (Top Pro)</option>
+                            <option value="LT1">LT1</option>
+                            <option value="HT2">HT2</option>
+                            <option value="LT2">LT2</option>
+                            <option value="HT3">HT3</option>
+                            <option value="LT3">LT3</option>
+                            <option value="HT4">HT4</option>
+                            <option value="LT4">LT4</option>
+                            <option value="HT5">HT5</option>
+                            <option value="LT5">LT5 (Noob)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="pixel-label">📋 PROOF OF TIER</label>
+                        <textarea id="proofText" class="pixel-input" rows="3" placeholder="Explain why you deserve this tier. Examples:&#10;- I beat [pro player] in a duel&#10;- I've been ranked HT1 on MCTiers&#10;- I won [tournament name]"></textarea>
+                        <small style="color:#4a5060;font-size:0.65rem;display:block;margin-top:0.3rem;">
+                            ⚠️ Be specific! Moderators will check your proof.
+                        </small>
+                    </div>
+                    <button id="uploadBtn" class="pixel-btn pixel-btn-primary">⬆ UPLOAD</button>
+                    <div id="uploadStatus" class="upload-status"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DUELS -->
+        <section id="duelsView" class="view-section" style="display:none;">
+            <div class="pixel-border">
+                <div class="view-header">
+                    <h2 class="pixel-title">⚔️ DUELS & FRIENDS</h2>
+                </div>
+                <div class="duels-grid">
+                    <div class="pixel-card">
+                        <h3 class="pixel-subtitle">👥 FRIENDS</h3>
+                        <div class="form-group">
+                            <input type="text" id="friendSearch" placeholder="Search username" class="pixel-input">
+                        </div>
+                        <button id="addFriendBtn" class="pixel-btn pixel-btn-secondary">➕ ADD FRIEND</button>
+                        <div class="duels-subhead">📨 FRIEND REQUESTS</div>
+                        <ul id="friendRequests" class="pixel-list"></ul>
+                        <div class="duels-subhead">👥 FRIENDS</div>
+                        <ul id="friendList" class="pixel-list"></ul>
+                    </div>
+                    <div class="pixel-card">
+                        <h3 class="pixel-subtitle">⚔️ DUELS</h3>
+                        <div class="form-group">
+                            <select id="duelType" class="pixel-input">
+                                <option value="FT3">⚔️ FT3 (First to 3)</option>
+                                <option value="FT5">⚔️ FT5 (First to 5)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="duelOpponent" placeholder="Opponent username" class="pixel-input">
+                        </div>
+                        <button id="createDuelBtn" class="pixel-btn pixel-btn-primary">⚔️ CREATE DUEL</button>
+                        <div class="duels-subhead">📨 DUEL INVITES</div>
+                        <ul id="duelInvites" class="pixel-list"></ul>
+                        <div class="duels-subhead">⚔️ ACTIVE DUELS</div>
+                        <ul id="duelList" class="pixel-list"></ul>
+                        <!-- ✅ COMPLETED DUELS - ADDED HERE -->
+                        <div class="duels-subhead">🏆 COMPLETED DUELS</div>
+                        <ul id="completedDuelsList" class="pixel-list">
+                            <li class="duel-empty">No completed duels yet</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DUEL PLAY (live head-to-head) -->
+        <section id="duelPlayView" class="view-section" style="display:none;">
+            <div class="pixel-border game-dashboard">
+                <div class="game-top-bar">
+                    <h2 class="pixel-title">⚔️ LIVE DUEL</h2>
+                    <div id="duelPlayScoreboard" class="game-stats"></div>
+                </div>
+
+                <div class="game-area">
+                    <div class="game-video-section">
+                        <div class="video-wrapper">
+                            <div style="position:relative;width:100%;padding-bottom:56.25%;background:#000;border:2px solid var(--line);">
+                                <iframe id="duelPlayVideo" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe>
+                                <div class="video-overlay">
+                                    <span class="pixel-badge">⚔️ DUEL</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="duelPlayStatus" class="game-status">⏳ Loading duel...</div>
+                    </div>
+
+                    <div class="game-controls-section">
+                        <div class="controls-panel">
+                            <div class="controls-header">
+                                <span class="pixel-subtitle">⚔️ GUESS THE TIER</span>
+                            </div>
+                            <div id="duelPlayOptions" class="game-options"></div>
+                            <div class="controls-footer">
+                                <button id="duelPlayBackBtn" class="pixel-btn pixel-btn-secondary">◀ BACK TO DUELS</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODERATOR -->
+        <section id="moderatorView" class="view-section" style="display:none;">
+            <div class="pixel-border">
+                <div class="view-header">
+                    <h2 class="pixel-title">🛡️ MODERATION</h2>
+                </div>
+                <div id="submissionQueue">
+                    <h3 class="pixel-subtitle">📋 PENDING CLIPS</h3>
+                    <ul id="pendingSubmissions" class="pixel-list"></ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="pixel-footer">
+        <p>⛏️ TierDuel • Guess the Tier • Minecraft PvP</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bad-words/3.0.4/badwords.min.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
