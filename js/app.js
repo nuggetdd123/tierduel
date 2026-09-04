@@ -44,8 +44,7 @@ const moderatorNav = document.getElementById('moderatorNav');
 const navLinks = document.querySelectorAll('.nav-link');
 let toastTimer = null;
 
-function showToast(message) {
-    export function showToast(message) {
+export function showToast(message) {
     if (!appToast || !appToastMessage) return;
 
     appToastMessage.textContent = message;
