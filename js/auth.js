@@ -1,4 +1,4 @@
-import { supabase, switchView, updateAuthUI } from './app.js';
+import { supabase, switchView, updateAuthUI, isValidUsername } from './app.js';
 
 // ============================================================
 // SIMPLE PASSWORD HASH
@@ -99,6 +99,11 @@ export function initAuth() {
             
             if (!username || !password) {
                 showMessage('Please enter username and password.', 'error');
+                return;
+            }
+
+            if (!isValidUsername(username)) {
+                showMessage('Username can only contain letters and numbers.', 'error');
                 return;
             }
             

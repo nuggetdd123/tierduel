@@ -21,51 +21,53 @@ let score = 0;
 let streak = 0;
 let gameActive = false;
 let currentSubmission = null;
+let roundStartedAt = 0;
 
 function calculateScore(actualTier, guessedTier) {
     const actualPos = TIER_ORDER[actualTier];
     const guessPos = TIER_ORDER[guessedTier];
     const diff = Math.abs(actualPos - guessPos);
     
-    let points = 0;
+    const accuracyPoints = [100, 50, 25, 10, 5, 2][Math.min(diff, 5)];
     let feedback = '';
     let emoji = '';
     
     if (diff === 0) {
-        points = 100;
         feedback = '🎯 PERFECT!';
         emoji = '🏆';
     } else if (diff === 1) {
-        points = 50;
         feedback = '🔥 CLOSE!';
         emoji = '🔥';
     } else if (diff === 2) {
-        points = 25;
         feedback = '👍 GOOD!';
         emoji = '👌';
     } else if (diff === 3) {
-        points = 10;
         feedback = '📊 OKAY';
         emoji = '📊';
     } else if (diff === 4) {
-        points = 5;
         feedback = '😬 OFF';
         emoji = '😬';
     } else {
-        points = 0;
         feedback = '💀 MISS';
         emoji = '💀';
     }
     
-    const multiplier = streak >= 5 ? 2 : streak >= 3 ? 1.5 : 1;
-    const finalPoints = Math.round(points * multiplier);
+    const nextStreak = diff === 0 ? streak + 1 : 0;
+    const streakMultiplier = nextStreak >= 5 ? 3 : nextStreak >= 3 ? 2 : 1;
+    const speedMultiplier = Date.now() - roundStartedAt <= 5000 ? 1.2 : 1;
+    const difficultyMultiplier = 1 + Math.abs(actualPos - 5.5) * 0.08;
+    const finalPoints = Math.round(accuracyPoints * speedMultiplier * streakMultiplier * difficultyMultiplier);
     
     return {
         points: finalPoints,
         diff,
         feedback,
         emoji,
-        multiplier,
+        multiplier: speedMultiplier * streakMultiplier * difficultyMultiplier,
+        speedMultiplier,
+        streakMultiplier,
+        difficultyMultiplier,
+        nextStreak,
         actual: actualTier,
         guessed: guessedTier,
         color: getColorForDiff(diff)
@@ -100,17 +102,19 @@ export function initGame() {
                 .eq('status', 'approved')
                 .eq('verification_status', 'verified');
             
-            if (!data || data.length < 3) {
-                document.getElementById('gameStatus').textContent = '❌ Not enough verified clips. Need at least 3.';
+            submissions = [...new Map(
+                data.map(submission => [getYouTubeEmbedUrl(submission.video_url.trim()), submission])
+            ).values()].sort(() => Math.random() - 0.5);
+
+            if (submissions.length < 3) {
+                document.getElementById('gameStatus').textContent = '❌ Not enough unique clips. Need at least 3.';
                 return;
             }
-            
-            submissions = data.sort(() => Math.random() - 0.5);
             score = 0;
             streak = 0;
             currentRound = 0;
             gameActive = true;
-            totalRounds = Math.min(10, submissions.length);
+            totalRounds = Math.min(3, submissions.length);
             
             document.getElementById('gameScoreDisplay').textContent = 'SCORE: 0';
             document.getElementById('gameStreak').textContent = '🔥 STREAK: 0';
@@ -141,12 +145,10 @@ function startRound() {
     
     currentSubmission = available[Math.floor(Math.random() * available.length)];
     currentRound++;
+    roundStartedAt = Date.now();
     
-    const embedUrl = getYouTubeEmbedUrl(currentSubmission.video_url);
-    
-    // Set iframe src
     const iframe = document.getElementById('gameVideo');
-    iframe.src = embedUrl;
+    iframe.src = getYouTubeEmbedUrl(currentSubmission.video_url);
     
     document.getElementById('gameRound').textContent = `ROUND ${currentRound}/${totalRounds}`;
     document.getElementById('gameStatus').textContent = '🎯 Choose the tier!';
@@ -154,7 +156,7 @@ function startRound() {
     document.getElementById('nextRoundBtn').style.display = 'none';
     
     const tierKeys = Object.keys(TIER_ORDER);
-    const shuffled = [...tierKeys].sort(() => Math.random() - 0.5);
+    const shuffled = tierKeys;
     
     const container = document.getElementById('gameOptions');
     container.innerHTML = '';
@@ -179,7 +181,7 @@ function handleGuess(guessedTier) {
     
     const points = result.points;
     score += points;
-    streak = points > 0 ? streak + 1 : 0;
+    streak = result.nextStreak;
     
     const resultDiv = document.getElementById('gameResult');
     resultDiv.style.display = 'block';
@@ -191,7 +193,7 @@ function handleGuess(guessedTier) {
     resultDiv.style.marginBottom = '1rem';
     resultDiv.style.textAlign = 'center';
     
-    const multiplierText = result.multiplier > 1 ? ` (${result.multiplier}x streak!)` : '';
+    const multiplierText = result.multiplier > 1 ? ` (${result.multiplier.toFixed(2)}x bonus)` : '';
     resultDiv.innerHTML = `
         <div style="font-size:1.2rem;color:${result.color};margin-bottom:0.5rem;">
             ${result.emoji} ${result.feedback}

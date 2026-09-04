@@ -16,16 +16,86 @@
                 <span class="pixel-icon">⛏️</span>
                 <span class="logo-text">TierDuel</span>
                 <span class="logo-subtitle">Guess the Tier</span>
+                <button id="updateNotesButton" class="nav-link" type="button" style="display:none;">✦ UPDATE</button>
             </div>
             <ul class="nav-links" id="navLinks">
-                <li><a href="#" data-view="game" class="nav-link active">🎮 Game</a></li>
-                <li><a href="#" data-view="upload" class="nav-link">📤 Upload</a></li>
-                <li><a href="#" data-view="duels" class="nav-link">⚔️ Duels</a></li>
+                <li><a href="#" data-view="game" class="nav-link active" style="display:none;">🎮 Game</a></li>
+                <li><a href="#" data-view="upload" class="nav-link" style="display:none;">📤 Upload</a></li>
+                <li><a href="#" data-view="duels" class="nav-link" style="display:none;">⚔️ Duels</a></li>
                 <li><a href="#" data-view="moderator" class="nav-link" id="moderatorNav" style="display:none;">🛡️ Mod</a></li>
                 <li><a href="#" id="authButton" class="nav-link">🔐 Login</a></li>
             </ul>
         </div>
     </nav>
+
+    <div id="updateNotesModal" class="update-modal" hidden>
+        <div class="update-modal-panel" role="dialog" aria-modal="true" aria-labelledby="updateNotesTitle">
+            <div class="update-modal-header">
+                <h2 id="updateNotesTitle" class="pixel-title">✦ UPDATE NOTES</h2>
+                <button id="closeUpdateNotesButton" class="update-modal-close" type="button" aria-label="Close update notes">×</button>
+            </div>
+            <ul class="update-notes-list">
+                <li>Games now use 3 clips per session.</li>
+                <li>Game, Upload, Duels, and Mod controls require login.</li>
+                <li>Duels show point comparisons before advancing.</li>
+                <li>Duels continue through every selected round.</li>
+                <li>Duplicate YouTube clips are filtered out.</li>
+                <li>Browser alerts are now custom in-app notifications.</li>
+                <li>Duel history can now be cleared from the Duels page.</li>
+                <li>Confirmations and moderator prompts now use custom dialogs.</li>
+                <li>New usernames now allow letters and numbers only.</li>
+                <li>Scoring now rewards accuracy, speed, streaks, and difficult tiers.</li>
+                <li>Both players now enter a duel automatically when it starts.</li>
+                <li>Active duels now use a Forfeit button instead of leaving mid-match.</li>
+                <li>Completed duels now show an animated win or loss popup.</li>
+                <li>Duel lists now remove finished matches and accepted requests immediately.</li>
+                <li>Players now receive a notification anywhere on the site for duel requests.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="update-modal" hidden>
+        <div class="update-modal-panel confirm-modal-panel" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+            <div class="update-modal-header">
+                <h2 id="confirmTitle" class="pixel-title">⚠ CONFIRM ACTION</h2>
+                <button id="closeConfirmButton" class="update-modal-close" type="button" aria-label="Cancel action">×</button>
+            </div>
+            <p id="confirmMessage" class="confirm-message"></p>
+            <div class="confirm-actions">
+                <button id="confirmCancelButton" class="pixel-btn pixel-btn-secondary" type="button">CANCEL</button>
+                <button id="confirmAcceptButton" class="pixel-btn pixel-btn-primary" type="button">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="promptModal" class="update-modal" hidden>
+        <div class="update-modal-panel" role="dialog" aria-modal="true" aria-labelledby="promptTitle">
+            <div class="update-modal-header">
+                <h2 id="promptTitle" class="pixel-title">✎ MODERATOR NOTE</h2>
+                <button id="closePromptButton" class="update-modal-close" type="button" aria-label="Cancel prompt">×</button>
+            </div>
+            <p id="promptMessage" class="confirm-message"></p>
+            <textarea id="promptInput" class="pixel-input prompt-input" rows="4" placeholder="Optional reason"></textarea>
+            <div class="confirm-actions">
+                <button id="promptCancelButton" class="pixel-btn pixel-btn-secondary" type="button">CANCEL</button>
+                <button id="promptAcceptButton" class="pixel-btn pixel-btn-primary" type="button">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="duelOutcomeModal" class="update-modal" hidden>
+        <div id="duelOutcomePanel" class="update-modal-panel duel-outcome-panel" role="dialog" aria-modal="true" aria-labelledby="duelOutcomeTitle">
+            <div class="duel-outcome-mark" id="duelOutcomeMark"></div>
+            <h2 id="duelOutcomeTitle" class="duel-outcome-title"></h2>
+            <p id="duelOutcomeScore" class="duel-outcome-score"></p>
+            <button id="closeDuelOutcomeButton" class="pixel-btn pixel-btn-primary" type="button">CONTINUE</button>
+        </div>
+    </div>
+
+    <div id="appToast" class="app-toast" role="alert" hidden>
+        <span id="appToastMessage"></span>
+        <button id="appToastClose" class="app-toast-close" type="button" aria-label="Close notification">×</button>
+    </div>
 
     <main id="app">
         <!-- AUTH -->
@@ -48,7 +118,7 @@
                     <h2 class="pixel-title">📝 REGISTER</h2>
                     <div class="form-group">
                         <label class="pixel-label">USERNAME</label>
-                        <input type="text" id="registerUsername" placeholder="Choose username" class="pixel-input">
+                        <input type="text" id="registerUsername" placeholder="Choose username" pattern="[A-Za-z0-9]+" title="Use letters and numbers only" class="pixel-input">
                     </div>
                     <div class="form-group">
                         <label class="pixel-label">PASSWORD</label>
@@ -68,7 +138,7 @@
                     <h2 class="pixel-title">🎮 GUESS THE TIER</h2>
                     <div class="game-stats">
                         <div id="gameScoreDisplay" class="pixel-score">SCORE: 0</div>
-                        <div id="gameRound" class="pixel-round">ROUND 0/10</div>
+                        <div id="gameRound" class="pixel-round">ROUND 0/3</div>
                         <div id="gameStreak" class="pixel-streak">🔥 STREAK: 0</div>
                     </div>
                 </div>
@@ -168,10 +238,17 @@
                     <div class="pixel-card">
                         <h3 class="pixel-subtitle">⚔️ DUELS</h3>
                         <div class="form-group">
-                            <select id="duelType" class="pixel-input">
-                                <option value="FT3">⚔️ FT3 (First to 3)</option>
-                                <option value="FT5">⚔️ FT5 (First to 5)</option>
-                            </select>
+                            <div class="duel-type-picker">
+                                <button id="duelTypeButton" class="pixel-input duel-type-button" type="button" aria-haspopup="listbox" aria-expanded="false">⚔️ FT3 (First to 3)</button>
+                                <div id="duelTypeMenu" class="duel-type-menu" role="listbox" hidden>
+                                    <button type="button" role="option" data-value="FT3" aria-selected="true">⚔️ FT3 (First to 3)</button>
+                                    <button type="button" role="option" data-value="FT5" aria-selected="false">⚔️ FT5 (First to 5)</button>
+                                </div>
+                                <select id="duelType" tabindex="-1" aria-hidden="true">
+                                    <option value="FT3" selected>FT3</option>
+                                    <option value="FT5">FT5</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <input type="text" id="duelOpponent" placeholder="Opponent username" class="pixel-input">
@@ -183,6 +260,7 @@
                         <ul id="duelList" class="pixel-list"></ul>
                         <!-- ✅ COMPLETED DUELS - ADDED HERE -->
                         <div class="duels-subhead">🏆 COMPLETED DUELS</div>
+                        <button id="clearDuelHistoryBtn" class="pixel-btn-small btn-remove" type="button">🗑 CLEAR HISTORY</button>
                         <ul id="completedDuelsList" class="pixel-list">
                             <li class="duel-empty">No completed duels yet</li>
                         </ul>
@@ -219,7 +297,7 @@
                             </div>
                             <div id="duelPlayOptions" class="game-options"></div>
                             <div class="controls-footer">
-                                <button id="duelPlayBackBtn" class="pixel-btn pixel-btn-secondary">◀ BACK TO DUELS</button>
+                                <button id="duelPlayForfeitBtn" class="pixel-btn-small btn-remove" type="button" style="display:none;">⚑ FORFEIT</button>
                             </div>
                         </div>
                     </div>

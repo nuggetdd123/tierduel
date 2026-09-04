@@ -23,8 +23,96 @@ const duelsView = document.getElementById('duelsView');
 const duelPlayView = document.getElementById('duelPlayView');
 const moderatorView = document.getElementById('moderatorView');
 const authButton = document.getElementById('authButton');
+const updateNotesButton = document.getElementById('updateNotesButton');
+const updateNotesModal = document.getElementById('updateNotesModal');
+const closeUpdateNotesButton = document.getElementById('closeUpdateNotesButton');
+const appToast = document.getElementById('appToast');
+const appToastMessage = document.getElementById('appToastMessage');
+const appToastClose = document.getElementById('appToastClose');
+const confirmModal = document.getElementById('confirmModal');
+const confirmMessage = document.getElementById('confirmMessage');
+const confirmCancelButton = document.getElementById('confirmCancelButton');
+const confirmAcceptButton = document.getElementById('confirmAcceptButton');
+const closeConfirmButton = document.getElementById('closeConfirmButton');
+const promptModal = document.getElementById('promptModal');
+const promptMessage = document.getElementById('promptMessage');
+const promptInput = document.getElementById('promptInput');
+const promptCancelButton = document.getElementById('promptCancelButton');
+const promptAcceptButton = document.getElementById('promptAcceptButton');
+const closePromptButton = document.getElementById('closePromptButton');
 const moderatorNav = document.getElementById('moderatorNav');
 const navLinks = document.querySelectorAll('.nav-link');
+let toastTimer = null;
+
+function showToast(message) {
+    export function showToast(message) {
+    if (!appToast || !appToastMessage) return;
+
+    appToastMessage.textContent = message;
+    appToast.hidden = false;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        appToast.hidden = true;
+    }, 4500);
+}
+
+function hideToast() {
+    if (appToast) appToast.hidden = true;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = null;
+}
+
+export function showConfirmation(message) {
+    if (!confirmModal || !confirmMessage || !confirmCancelButton || !confirmAcceptButton) {
+        return Promise.resolve(false);
+    }
+
+    confirmMessage.textContent = message;
+    confirmModal.hidden = false;
+    return new Promise(resolve => {
+        const finish = confirmed => {
+            confirmModal.hidden = true;
+            confirmCancelButton.onclick = null;
+            confirmAcceptButton.onclick = null;
+            closeConfirmButton.onclick = null;
+            confirmModal.onclick = null;
+            resolve(confirmed);
+        };
+        confirmCancelButton.onclick = () => finish(false);
+        confirmAcceptButton.onclick = () => finish(true);
+        closeConfirmButton.onclick = () => finish(false);
+        confirmModal.onclick = event => {
+            if (event.target === confirmModal) finish(false);
+        };
+    });
+}
+
+export function showPrompt(message) {
+    if (!promptModal || !promptMessage || !promptInput || !promptCancelButton || !promptAcceptButton) {
+        return Promise.resolve(null);
+    }
+
+    promptMessage.textContent = message;
+    promptInput.value = '';
+    promptModal.hidden = false;
+    promptInput.focus();
+    return new Promise(resolve => {
+        const finish = value => {
+            promptModal.hidden = true;
+            promptCancelButton.onclick = null;
+            promptAcceptButton.onclick = null;
+            closePromptButton.onclick = null;
+            promptModal.onclick = null;
+            resolve(value);
+        };
+        promptCancelButton.onclick = () => finish(null);
+        closePromptButton.onclick = () => finish(null);
+        promptAcceptButton.onclick = () => finish(promptInput.value);
+        promptModal.onclick = event => {
+            if (event.target === promptModal) finish(null);
+        };
+    });
+}
 
 // ============================================================
 // VIEW SWITCHER - WITH LOGIN CHECK!
@@ -76,6 +164,10 @@ export function getCurrentUser() {
     return null;
 }
 
+export function isValidUsername(username) {
+    return /^[A-Za-z0-9]+$/.test(username);
+}
+
 // ============================================================
 // IS MODERATOR
 // ============================================================
@@ -115,6 +207,7 @@ export async function updateAuthUI() {
         if (uploadLink) uploadLink.style.display = 'block';
         if (duelsLink) duelsLink.style.display = 'block';
         if (gameLink) gameLink.style.display = 'block';
+        if (updateNotesButton) updateNotesButton.style.display = 'block';
         
         moderatorNav.style.display = user.is_moderator ? 'block' : 'none';
         
@@ -131,7 +224,8 @@ export async function updateAuthUI() {
         
         if (uploadLink) uploadLink.style.display = 'none';
         if (duelsLink) duelsLink.style.display = 'none';
-        if (gameLink) gameLink.style.display = 'block';
+        if (gameLink) gameLink.style.display = 'none';
+        if (updateNotesButton) updateNotesButton.style.display = 'none';
         if (modLink) modLink.style.display = 'none';
         
         moderatorNav.style.display = 'none';
@@ -171,6 +265,12 @@ export function getYouTubeEmbedUrl(url) {
     return match ? `https://www.youtube.com/embed/${match[1]}` : url;
 }
 
+export function isSupportedVideoUrl(url) {
+    if (!url) return false;
+
+    return /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i.test(url);
+}
+
 // ============================================================
 // INIT
 // ============================================================
@@ -179,6 +279,26 @@ async function initApp() {
     console.log('📡 Connected to:', supabaseUrl);
     
     initNavigation();
+    window.alert = showToast;
+    if (appToastClose) appToastClose.onclick = hideToast;
+    if (updateNotesButton) {
+        updateNotesButton.onclick = () => {
+            if (updateNotesModal) updateNotesModal.hidden = false;
+        };
+    }
+    if (closeUpdateNotesButton) {
+        closeUpdateNotesButton.onclick = () => {
+            if (updateNotesModal) updateNotesModal.hidden = true;
+        };
+    }
+    if (updateNotesModal) {
+        updateNotesModal.onclick = (event) => {
+            if (event.target === updateNotesModal) updateNotesModal.hidden = true;
+        };
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') updateNotesModal.hidden = true;
+        });
+    }
     await updateAuthUI();
     
     const { initAuth } = await import('./auth.js');

@@ -1,4 +1,4 @@
-import { supabase, getCurrentUser, getYouTubeEmbedUrl } from './app.js';
+import { supabase, getCurrentUser, getYouTubeEmbedUrl, showPrompt } from './app.js';
 
 export function initModerator() {
     loadPendingSubmissions();
@@ -33,7 +33,7 @@ async function loadPendingSubmissions() {
     list.innerHTML = '';
     
     if (!data || data.length === 0) {
-        list.innerHTML = '<li>📋 No pending submissions</li>';
+        list.innerHTML = '<li class="duel-empty">📋 No pending submissions</li>';
         return;
     }
     
@@ -104,7 +104,7 @@ window.rejectProof = async (id) => {
     if (!user) return alert('Please login');
     if (!user.is_moderator) return alert('Not a moderator');
     
-    const reason = prompt('Why is this proof rejected? (Optional)');
+    const reason = await showPrompt('Why is this proof rejected? (Optional)');
     if (reason === null) return;
     
     const { data: sub } = await supabase

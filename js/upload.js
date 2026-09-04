@@ -1,4 +1,4 @@
-import { supabase, getCurrentUser } from './app.js';
+import { supabase, getCurrentUser, isSupportedVideoUrl } from './app.js';
 
 export function initUpload() {
     const uploadBtn = document.getElementById('uploadBtn');
@@ -32,9 +32,7 @@ export function initUpload() {
                 return;
             }
 
-            // Validate YouTube URL
-            const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-            if (!youtubeRegex.test(videoUrl)) {
+            if (!isSupportedVideoUrl(videoUrl)) {
                 status.innerHTML = '<div class="error">❌ Invalid YouTube URL. Please paste a valid YouTube link.</div>';
                 return;
             }
