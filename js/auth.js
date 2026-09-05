@@ -24,13 +24,13 @@ function showMessage(text, type) {
 }
 
 // ============================================================
-// INIT AUTH - DIRECT onclick (GUARANTEED TO WORK!)
+// INIT AUTH
 // ============================================================
 export function initAuth() {
     console.log('🔐 initAuth started');
     
     // ============================================================
-    // LOGIN BUTTON - DIRECT onclick
+    // LOGIN BUTTON
     // ============================================================
     const loginBtn = document.getElementById('loginBtn');
     if (loginBtn) {
@@ -68,8 +68,17 @@ export function initAuth() {
                 localStorage.setItem('tierduel_user', JSON.stringify({
                     id: user.id,
                     username: user.username,
-                    is_moderator: user.is_moderator
+                    is_moderator: user.is_moderator || false
                 }));
+                
+                // Load user's badges after login
+                const { data: userBadges } = await supabase
+                    .from('user_badges')
+                    .select('badge_id')
+                    .eq('user_id', user.id);
+                
+                const badgeIds = userBadges?.map(b => b.badge_id) || [];
+                localStorage.setItem('tierduel_badges', JSON.stringify(badgeIds));
                 
                 showMessage('✅ Login successful!', 'success');
                 setTimeout(() => {
@@ -86,7 +95,7 @@ export function initAuth() {
     }
     
     // ============================================================
-    // REGISTER BUTTON - DIRECT onclick
+    // REGISTER BUTTON
     // ============================================================
     const registerBtn = document.getElementById('registerBtn');
     if (registerBtn) {
@@ -139,6 +148,7 @@ export function initAuth() {
                 showMessage('✅ Registration successful! Please login.', 'success');
                 document.getElementById('registerUsername').value = '';
                 document.getElementById('registerPassword').value = '';
+                
                 setTimeout(() => {
                     document.getElementById('loginForm').style.display = 'block';
                     document.getElementById('registerForm').style.display = 'none';
@@ -154,7 +164,7 @@ export function initAuth() {
     }
     
     // ============================================================
-    // SHOW REGISTER LINK
+    // SWITCH FORMS
     // ============================================================
     const showRegister = document.getElementById('showRegister');
     if (showRegister) {
@@ -166,9 +176,6 @@ export function initAuth() {
         };
     }
     
-    // ============================================================
-    // SHOW LOGIN LINK
-    // ============================================================
     const showLogin = document.getElementById('showLogin');
     if (showLogin) {
         showLogin.onclick = function(e) {

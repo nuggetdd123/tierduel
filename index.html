@@ -23,8 +23,20 @@
                 <li><a href="#" data-view="upload" class="nav-link" style="display:none;">📤 Upload</a></li>
                 <li><a href="#" data-view="duels" class="nav-link" style="display:none;">⚔️ Duels</a></li>
                 <li><a href="#" data-view="moderator" class="nav-link" id="moderatorNav" style="display:none;">🛡️ Mod</a></li>
-                <li><a href="#" id="authButton" class="nav-link">🔐 Login</a></li>
             </ul>
+            <div class="user-menu" id="userMenu">
+                <a href="#" id="authButton" class="nav-link">🔐 Login</a>
+                <div class="user-dropdown" id="userDropdown" hidden>
+                    <button id="userMenuButton" class="user-menu-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="userMenuPanel">
+                        <span id="userMenuName"></span>
+                        <span class="user-menu-arrow" aria-hidden="true">▾</span>
+                    </button>
+                    <div id="userMenuPanel" class="user-menu-panel" role="menu" hidden>
+                        <button type="button" id="myBadgesButton" class="user-menu-item" role="menuitem">🏅 My Badges</button>
+                        <button type="button" id="logoutButton" class="user-menu-item" role="menuitem">🚪 Logout</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -50,6 +62,7 @@
                 <li>Completed duels now show an animated win or loss popup.</li>
                 <li>Duel lists now remove finished matches and accepted requests immediately.</li>
                 <li>Players now receive a notification anywhere on the site for duel requests.</li>
+                <li>🏅 Badge system added! Claim the OG badge now!</li>
             </ul>
         </div>
     </div>
@@ -145,6 +158,12 @@
 
                 <div class="game-area">
                     <div class="game-video-section">
+                        <div id="ogClaimSection" class="og-claim-section" hidden>
+                            <div class="og-claim-title">⭐ CLAIM OG BADGE</div>
+                            <p id="ogClaimCount" class="og-claim-count">Available: 100/100 remaining</p>
+                            <button id="ogClaimButton" class="pixel-btn pixel-btn-primary og-claim-button" type="button">🏆 CLAIM NOW</button>
+                            <div id="ogClaimedStatus" class="og-claimed-status" hidden>✅ OG BADGE CLAIMED</div>
+                        </div>
                         <div class="video-wrapper">
                             <div id="gameVideoContainer" style="position:relative;width:100%;padding-bottom:56.25%;background:#000;border:2px solid var(--line);">
                                 <iframe id="gameVideo" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe>
@@ -258,7 +277,6 @@
                         <ul id="duelInvites" class="pixel-list"></ul>
                         <div class="duels-subhead">⚔️ ACTIVE DUELS</div>
                         <ul id="duelList" class="pixel-list"></ul>
-                        <!-- ✅ COMPLETED DUELS - ADDED HERE -->
                         <div class="duels-subhead">🏆 COMPLETED DUELS</div>
                         <button id="clearDuelHistoryBtn" class="pixel-btn-small btn-remove" type="button">🗑 CLEAR HISTORY</button>
                         <ul id="completedDuelsList" class="pixel-list">
@@ -269,7 +287,19 @@
             </div>
         </section>
 
-        <!-- DUEL PLAY (live head-to-head) -->
+        <!-- BADGES -->
+        <section id="badgesView" class="view-section" style="display:none;">
+            <div class="pixel-border">
+                <div class="view-header">
+                    <h2 class="pixel-title">🏅 BADGES</h2>
+                </div>
+                <div id="badgeContainer" class="badges-grid">
+                    <p style="color:var(--muted);font-size:0.8rem;">Loading badges...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- DUEL PLAY -->
         <section id="duelPlayView" class="view-section" style="display:none;">
             <div class="pixel-border game-dashboard">
                 <div class="game-top-bar">

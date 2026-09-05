@@ -22,7 +22,14 @@ const uploadView = document.getElementById('uploadView');
 const duelsView = document.getElementById('duelsView');
 const duelPlayView = document.getElementById('duelPlayView');
 const moderatorView = document.getElementById('moderatorView');
+const badgesView = document.getElementById('badgesView');
 const authButton = document.getElementById('authButton');
+const userDropdown = document.getElementById('userDropdown');
+const userMenuButton = document.getElementById('userMenuButton');
+const userMenuName = document.getElementById('userMenuName');
+const userMenuPanel = document.getElementById('userMenuPanel');
+const myBadgesButton = document.getElementById('myBadgesButton');
+const logoutButton = document.getElementById('logoutButton');
 const updateNotesButton = document.getElementById('updateNotesButton');
 const updateNotesModal = document.getElementById('updateNotesModal');
 const closeUpdateNotesButton = document.getElementById('closeUpdateNotesButton');
@@ -114,28 +121,31 @@ export function showPrompt(message) {
 }
 
 // ============================================================
-// VIEW SWITCHER - WITH LOGIN CHECK!
+// VIEW SWITCHER
 // ============================================================
 export function switchView(view) {
     const user = getCurrentUser();
     
-    const protectedViews = ['game', 'upload', 'duels', 'moderator'];
+    const protectedViews = ['game', 'upload', 'duels', 'moderator', 'badges'];
     
     if (protectedViews.includes(view) && !user) {
         alert('⚠️ You must be logged in to access this!');
         view = 'auth';
     }
     
-    [authSection, gameView, uploadView, duelsView, duelPlayView, moderatorView].forEach(el => {
+    [authSection, gameView, uploadView, duelsView, duelPlayView, moderatorView, badgesView].forEach(el => {
         if (el) el.style.display = 'none';
     });
     navLinks.forEach(l => l.classList.remove('active'));
+    myBadgesButton?.classList.remove('active');
+    closeUserMenu();
     
     if (view === 'auth') {
         authSection.style.display = 'block';
     } else if (view === 'game') {
         gameView.style.display = 'block';
         document.querySelector('[data-view="game"]')?.classList.add('active');
+        import('./bages.js').then(({ loadOGClaimSection }) => loadOGClaimSection());
     } else if (view === 'upload') {
         uploadView.style.display = 'block';
         document.querySelector('[data-view="upload"]')?.classList.add('active');
@@ -145,11 +155,15 @@ export function switchView(view) {
     } else if (view === 'moderator') {
         moderatorView.style.display = 'block';
         document.querySelector('[data-view="moderator"]')?.classList.add('active');
+    } else if (view === 'badges') {
+        badgesView.style.display = 'block';
+        myBadgesButton?.classList.add('active');
+        import('./bages.js').then(({ loadBadges }) => loadBadges());
     }
 }
 
 // ============================================================
-// GET CURRENT USER (from localStorage)
+// GET CURRENT USER
 // ============================================================
 export function getCurrentUser() {
     const stored = localStorage.getItem('tierduel_user');
@@ -180,6 +194,7 @@ export function isModerator() {
 // ============================================================
 export function logout() {
     localStorage.removeItem('tierduel_user');
+    localStorage.removeItem('tierduel_badges');
     currentUser = null;
     return { success: true };
 }
@@ -187,6 +202,48 @@ export function logout() {
 // ============================================================
 // AUTH UI UPDATE
 // ============================================================
+function closeUserMenu() {
+    if (!userMenuPanel || !userMenuButton) return;
+    userMenuPanel.hidden = true;
+    userMenuButton.setAttribute('aria-expanded', 'false');
+}
+
+function setUserMenuOpen(open) {
+    if (!userMenuPanel || !userMenuButton) return;
+    userMenuPanel.hidden = !open;
+    userMenuButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function initUserMenu() {
+    if (userMenuButton) {
+        userMenuButton.onclick = (e) => {
+            e.stopPropagation();
+            setUserMenuOpen(userMenuPanel.hidden);
+        };
+    }
+
+    if (myBadgesButton) {
+        myBadgesButton.onclick = () => {
+            closeUserMenu();
+            switchView('badges');
+        };
+    }
+
+    if (logoutButton) {
+        logoutButton.onclick = () => {
+            closeUserMenu();
+            logout();
+            location.reload();
+        };
+    }
+
+    document.addEventListener('click', (e) => {
+        if (userDropdown && !userDropdown.contains(e.target)) {
+            closeUserMenu();
+        }
+    });
+}
+
 export async function updateAuthUI() {
     const user = getCurrentUser();
     const uploadLink = document.querySelector('[data-view="upload"]');
@@ -196,12 +253,10 @@ export async function updateAuthUI() {
     
     if (user) {
         currentUser = user;
-        authButton.textContent = '🚪 Logout';
-        authButton.onclick = (e) => {
-            e.preventDefault();
-            logout();
-            location.reload();
-        };
+        if (authButton) authButton.style.display = 'none';
+        if (userDropdown) userDropdown.hidden = false;
+        if (userMenuName) userMenuName.textContent = user.username;
+        closeUserMenu();
         
         if (uploadLink) uploadLink.style.display = 'block';
         if (duelsLink) duelsLink.style.display = 'block';
@@ -215,11 +270,17 @@ export async function updateAuthUI() {
         }
     } else {
         currentUser = null;
-        authButton.textContent = '🔐 Login';
-        authButton.onclick = (e) => {
-            e.preventDefault();
-            switchView('auth');
-        };
+        closeUserMenu();
+        if (userDropdown) userDropdown.hidden = true;
+        if (userMenuName) userMenuName.textContent = '';
+        if (authButton) {
+            authButton.style.display = 'block';
+            authButton.textContent = '🔐 Login';
+            authButton.onclick = (e) => {
+                e.preventDefault();
+                switchView('auth');
+            };
+        }
         
         if (uploadLink) uploadLink.style.display = 'none';
         if (duelsLink) duelsLink.style.display = 'none';
@@ -233,7 +294,7 @@ export async function updateAuthUI() {
 }
 
 // ============================================================
-// NAVIGATION - WITH LOGIN CHECK!
+// NAVIGATION
 // ============================================================
 function initNavigation() {
     document.querySelectorAll('[data-view]').forEach(link => {
@@ -266,7 +327,6 @@ export function getYouTubeEmbedUrl(url) {
 
 export function isSupportedVideoUrl(url) {
     if (!url) return false;
-
     return /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i.test(url);
 }
 
@@ -278,6 +338,7 @@ async function initApp() {
     console.log('📡 Connected to:', supabaseUrl);
     
     initNavigation();
+    initUserMenu();
     window.alert = showToast;
     if (appToastClose) appToastClose.onclick = hideToast;
     if (updateNotesButton) {
@@ -305,12 +366,14 @@ async function initApp() {
     const { initGame } = await import('./game.js');
     const { initDuels } = await import('./duels.js');
     const { initModerator } = await import('./moderator.js');
+    const { initOGClaim } = await import('./bages.js');
     
     initAuth();
     initUpload();
     initGame();
     initDuels();
     initModerator();
+    initOGClaim();
     
     if (!currentUser) {
         switchView('auth');
