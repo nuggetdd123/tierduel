@@ -22,6 +22,7 @@
                 <li><a href="#" data-view="game" class="nav-link active" style="display:none;">🎮 Game</a></li>
                 <li><a href="#" data-view="upload" class="nav-link" style="display:none;">📤 Upload</a></li>
                 <li><a href="#" data-view="duels" class="nav-link" style="display:none;">⚔️ Duels</a></li>
+                <li><a href="#" data-view="friends" class="nav-link" id="friendsNav" style="display:none;">👥 Friends</a></li>
                 <li><a href="#" data-view="moderator" class="nav-link" id="moderatorNav" style="display:none;">🛡️ Mod</a></li>
             </ul>
             <div class="user-menu" id="userMenu">
@@ -33,6 +34,8 @@
                     </button>
                     <div id="userMenuPanel" class="user-menu-panel" role="menu" hidden>
                         <button type="button" id="myBadgesButton" class="user-menu-item" role="menuitem">🏅 My Badges</button>
+                        <button type="button" id="suggestFeatureButton" class="user-menu-item" role="menuitem">💡 Suggest a Feature</button>
+                        <button type="button" id="settingsMenuButton" class="user-menu-item" role="menuitem">⚙️ Settings</button>
                         <button type="button" id="logoutButton" class="user-menu-item" role="menuitem">🚪 Logout</button>
                     </div>
                 </div>
@@ -40,30 +43,78 @@
         </div>
     </nav>
 
+    <!-- Action toasts (friend requests / duel invites) render here, injected by app.js -->
+    <div id="actionToastStack" class="action-toast-stack" aria-live="polite"></div>
+
     <div id="updateNotesModal" class="update-modal" hidden>
         <div class="update-modal-panel" role="dialog" aria-modal="true" aria-labelledby="updateNotesTitle">
             <div class="update-modal-header">
-                <h2 id="updateNotesTitle" class="pixel-title">✦ UPDATE NOTES</h2>
+                <h2 id="updateNotesTitle" class="pixel-title">📋 UPDATE LOGS</h2>
                 <button id="closeUpdateNotesButton" class="update-modal-close" type="button" aria-label="Close update notes">×</button>
             </div>
-            <ul class="update-notes-list">
-                <li>Games now use 3 clips per session.</li>
-                <li>Game, Upload, Duels, and Mod controls require login.</li>
-                <li>Duels show point comparisons before advancing.</li>
-                <li>Duels continue through every selected round.</li>
-                <li>Duplicate YouTube clips are filtered out.</li>
-                <li>Browser alerts are now custom in-app notifications.</li>
-                <li>Duel history can now be cleared from the Duels page.</li>
-                <li>Confirmations and moderator prompts now use custom dialogs.</li>
-                <li>New usernames now allow letters and numbers only.</li>
-                <li>Scoring now rewards accuracy, speed, streaks, and difficult tiers.</li>
-                <li>Both players now enter a duel automatically when it starts.</li>
-                <li>Active duels now use a Forfeit button instead of leaving mid-match.</li>
-                <li>Completed duels now show an animated win or loss popup.</li>
-                <li>Duel lists now remove finished matches and accepted requests immediately.</li>
-                <li>Players now receive a notification anywhere on the site for duel requests.</li>
-                <li>🏅 Badge system added! Claim the OG badge now!</li>
-            </ul>
+            <div class="update-log-version">
+                <div class="update-log-version-header">
+                    <h3 class="update-log-heading">UPDATE 1.2</h3>
+                    <span class="update-log-badge">LATEST</span>
+                </div>
+                <ul class="update-notes-list">
+                    <li><span class="update-note-icon">💡</span><span>Player suggestion box — submit feature ideas right from the menu</span></li>
+                    <li><span class="update-note-icon">🛡️</span><span>New Suggestions tab in the moderation panel</span></li>
+                    <li><span class="update-note-icon">🗑️</span><span>Denied suggestions are removed automatically</span></li>
+                    <li><span class="update-note-icon">📐</span><span>Bigger, roomier moderation panel — see more at a glance</span></li>
+                    <li><span class="update-note-icon">🎨</span><span>Redesigned update log</span></li>
+                </ul>
+            </div>
+            <div class="update-log-version">
+                <div class="update-log-version-header">
+                    <h3 class="update-log-heading">UPDATE 1.1</h3>
+                </div>
+                <ul class="update-notes-list">
+                    <li><span class="update-note-icon">⚙️</span><span>Settings page with color customization</span></li>
+                    <li><span class="update-note-icon">👥</span><span>Separate Friends tab</span></li>
+                    <li><span class="update-note-icon">🏅</span><span>Badge equipping system</span></li>
+                    <li><span class="update-note-icon">📋</span><span>Update logs page</span></li>
+                    <li><span class="update-note-icon">✨</span><span>Animations throughout the app</span></li>
+                    <li><span class="update-note-icon">🔔</span><span>In-app notifications for friend requests</span></li>
+                    <li><span class="update-note-icon">🔔</span><span>In-app notifications for duel invites</span></li>
+                    <li><span class="update-note-icon">⚔️</span><span>Fixed duel round resolution</span></li>
+                    <li><span class="update-note-icon">⚔️</span><span>Instant duel updates</span></li>
+                    <li><span class="update-note-icon">👤</span><span>Opponent info in duels (name + equipped badge)</span></li>
+                    <li><span class="update-note-icon">🎯</span><span>OG badge moved below START button</span></li>
+                    <li><span class="update-note-icon">💫</span><span>UI polish and improvements</span></li>
+                </ul>
+            </div>
+            <div class="update-log-version">
+                <div class="update-log-version-header">
+                    <h3 class="update-log-heading">UPDATE 1.0</h3>
+                </div>
+                <ul class="update-notes-list">
+                    <li><span class="update-note-icon">🎮</span><span>Game mode with tier guessing</span></li>
+                    <li><span class="update-note-icon">📤</span><span>Clip upload system</span></li>
+                    <li><span class="update-note-icon">⚔️</span><span>Duels system</span></li>
+                    <li><span class="update-note-icon">👥</span><span>Friends system</span></li>
+                    <li><span class="update-note-icon">🏅</span><span>OG Badge (limited to 100)</span></li>
+                    <li><span class="update-note-icon">🛡️</span><span>Moderation panel</span></li>
+                    <li><span class="update-note-icon">🎨</span><span>Pixel/Minecraft theme</span></li>
+                    <li><span class="update-note-icon">🔐</span><span>Authentication system</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="suggestionModal" class="update-modal" hidden>
+        <div class="update-modal-panel" role="dialog" aria-modal="true" aria-labelledby="suggestionTitle">
+            <div class="update-modal-header">
+                <h2 id="suggestionTitle" class="pixel-title">💡 SUGGEST A FEATURE</h2>
+                <button id="closeSuggestionButton" class="update-modal-close" type="button" aria-label="Close suggestion form">×</button>
+            </div>
+            <p class="confirm-message">Got an idea to make TierDuel better? Send it straight to the moderators.</p>
+            <textarea id="suggestionInput" class="pixel-input prompt-input" rows="4" maxlength="500" placeholder="e.g. Add a spectator mode for duels..."></textarea>
+            <div id="suggestionMessage" class="auth-message" style="display:none;"></div>
+            <div class="confirm-actions">
+                <button id="cancelSuggestionButton" class="pixel-btn pixel-btn-secondary" type="button">CANCEL</button>
+                <button id="submitSuggestionButton" class="pixel-btn pixel-btn-primary" type="button">💡 SUBMIT</button>
+            </div>
         </div>
     </div>
 
@@ -164,8 +215,8 @@
                             <button id="ogClaimButton" class="pixel-btn pixel-btn-primary og-claim-button" type="button">🏆 CLAIM NOW</button>
                             <div id="ogClaimedStatus" class="og-claimed-status" hidden>✅ OG BADGE CLAIMED</div>
                         </div>
-                        <div class="video-wrapper">
-                            <div id="gameVideoContainer" style="position:relative;width:100%;padding-bottom:56.25%;background:#000;border:2px solid var(--line);">
+                        <div class="video-wrapper video-wrapper-large">
+                            <div id="gameVideoContainer" style="position:relative;width:100%;padding-bottom:56.25%;background:#000;">
                                 <iframe id="gameVideo" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe>
                                 <div class="video-overlay">
                                     <span class="pixel-badge">▶ WATCH</span>
@@ -180,13 +231,13 @@
                             <div class="controls-header">
                                 <span class="pixel-subtitle">⚔️ GUESS THE TIER</span>
                             </div>
+                            <div class="button-row button-row-top">
+                                <button id="startGameBtn" class="pixel-btn pixel-btn-primary">▶ START</button>
+                                <button id="nextRoundBtn" class="pixel-btn pixel-btn-secondary" style="display:none;">▶ NEXT</button>
+                            </div>
                             <div id="gameOptions" class="game-options"></div>
                             <div class="controls-footer">
                                 <div id="gameResult" class="game-result" style="display:none;"></div>
-                                <div class="button-row">
-                                    <button id="startGameBtn" class="pixel-btn pixel-btn-primary">▶ START</button>
-                                    <button id="nextRoundBtn" class="pixel-btn pixel-btn-secondary" style="display:none;">▶ NEXT</button>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -240,22 +291,11 @@
         <section id="duelsView" class="view-section" style="display:none;">
             <div class="pixel-border">
                 <div class="view-header">
-                    <h2 class="pixel-title">⚔️ DUELS & FRIENDS</h2>
+                    <h2 class="pixel-title">⚔️ DUELS</h2>
                 </div>
                 <div class="duels-grid">
                     <div class="pixel-card">
-                        <h3 class="pixel-subtitle">👥 FRIENDS</h3>
-                        <div class="form-group">
-                            <input type="text" id="friendSearch" placeholder="Search username" class="pixel-input">
-                        </div>
-                        <button id="addFriendBtn" class="pixel-btn pixel-btn-secondary">➕ ADD FRIEND</button>
-                        <div class="duels-subhead">📨 FRIEND REQUESTS</div>
-                        <ul id="friendRequests" class="pixel-list"></ul>
-                        <div class="duels-subhead">👥 FRIENDS</div>
-                        <ul id="friendList" class="pixel-list"></ul>
-                    </div>
-                    <div class="pixel-card">
-                        <h3 class="pixel-subtitle">⚔️ DUELS</h3>
+                        <h3 class="pixel-subtitle">⚔️ CREATE DUEL</h3>
                         <div class="form-group">
                             <div class="duel-type-picker">
                                 <button id="duelTypeButton" class="pixel-input duel-type-button" type="button" aria-haspopup="listbox" aria-expanded="false">⚔️ FT3 (First to 3)</button>
@@ -275,6 +315,9 @@
                         <button id="createDuelBtn" class="pixel-btn pixel-btn-primary">⚔️ CREATE DUEL</button>
                         <div class="duels-subhead">📨 DUEL INVITES</div>
                         <ul id="duelInvites" class="pixel-list"></ul>
+                    </div>
+                    <div class="pixel-card">
+                        <h3 class="pixel-subtitle">🏆 YOUR DUELS</h3>
                         <div class="duels-subhead">⚔️ ACTIVE DUELS</div>
                         <ul id="duelList" class="pixel-list"></ul>
                         <div class="duels-subhead">🏆 COMPLETED DUELS</div>
@@ -284,6 +327,47 @@
                         </ul>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- FRIENDS -->
+        <section id="friendsView" class="view-section" style="display:none;">
+            <div class="pixel-border">
+                <div class="view-header">
+                    <h2 class="pixel-title">👥 FRIENDS</h2>
+                </div>
+                <div class="duels-grid">
+                    <div class="pixel-card">
+                        <h3 class="pixel-subtitle">➕ ADD FRIEND</h3>
+                        <div class="form-group">
+                            <input type="text" id="friendSearch" placeholder="Search username" class="pixel-input">
+                        </div>
+                        <button id="addFriendBtn" class="pixel-btn pixel-btn-secondary">➕ ADD FRIEND</button>
+                        <div class="duels-subhead">📨 FRIEND REQUESTS</div>
+                        <ul id="friendRequests" class="pixel-list"></ul>
+                    </div>
+                    <div class="pixel-card">
+                        <h3 class="pixel-subtitle">👥 YOUR FRIENDS</h3>
+                        <ul id="friendList" class="pixel-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="settingsView" class="view-section" style="display:none;">
+            <div class="pixel-border">
+                <div class="view-header">
+                    <h2 class="pixel-title">⚙️ SETTINGS</h2>
+                </div>
+                <p style="color:var(--muted);font-size:0.75rem;margin-bottom:1rem;">
+                    Pick a color theme. Changes are saved to this browser only.
+                </p>
+                <div id="themePresetGrid" class="theme-preset-grid"></div>
+                <div class="button-row">
+                    <button id="resetSettingsBtn" class="pixel-btn pixel-btn-secondary">↺ RESET DEFAULTS</button>
+                </div>
+                <div id="settingsStatus" class="upload-status"></div>
             </div>
         </section>
 
@@ -309,8 +393,8 @@
 
                 <div class="game-area">
                     <div class="game-video-section">
-                        <div class="video-wrapper">
-                            <div style="position:relative;width:100%;padding-bottom:56.25%;background:#000;border:2px solid var(--line);">
+                        <div class="video-wrapper video-wrapper-large">
+                            <div style="position:relative;width:100%;padding-bottom:56.25%;background:#000;">
                                 <iframe id="duelPlayVideo" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe>
                                 <div class="video-overlay">
                                     <span class="pixel-badge">⚔️ DUEL</span>
@@ -336,14 +420,20 @@
         </section>
 
         <!-- MODERATOR -->
-        <section id="moderatorView" class="view-section" style="display:none;">
+        <section id="moderatorView" class="view-section mod-panel" style="display:none;">
             <div class="pixel-border">
                 <div class="view-header">
                     <h2 class="pixel-title">🛡️ MODERATION</h2>
                 </div>
-                <div id="submissionQueue">
-                    <h3 class="pixel-subtitle">📋 PENDING CLIPS</h3>
-                    <ul id="pendingSubmissions" class="pixel-list"></ul>
+                <div class="mod-tabs" role="tablist">
+                    <button type="button" class="mod-tab active" id="modTabClipsButton" data-mod-tab="clips" role="tab" aria-selected="true" aria-controls="modTabClips">📋 Pending Clips<span id="modClipsCount" class="mod-tab-count" hidden>0</span></button>
+                    <button type="button" class="mod-tab" id="modTabSuggestionsButton" data-mod-tab="suggestions" role="tab" aria-selected="false" aria-controls="modTabSuggestions">💡 Suggestions<span id="modSuggestionsCount" class="mod-tab-count" hidden>0</span></button>
+                </div>
+                <div id="modTabClips" class="mod-tab-panel" role="tabpanel">
+                    <ul id="pendingSubmissions" class="pixel-list mod-list mod-clip-list"></ul>
+                </div>
+                <div id="modTabSuggestions" class="mod-tab-panel" role="tabpanel" hidden>
+                    <ul id="pendingSuggestions" class="pixel-list mod-list mod-suggestion-list"></ul>
                 </div>
             </div>
         </section>

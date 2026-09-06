@@ -56,6 +56,13 @@ body {
     line-height: 1.6;
 }
 
+/* Some theme presets enable a subtle two-tone gradient background
+   instead of a flat obsidian fill. Toggled by settings.js. */
+body.gradient-bg {
+    background: linear-gradient(160deg, var(--obsidian) 0%, var(--obsidian-2) 100%);
+    background-attachment: fixed;
+}
+
 ::selection {
     background: var(--grass-dark);
     color: var(--parchment-bright);
@@ -119,7 +126,7 @@ a { color: inherit; }
    ============================================================ */
 #navbar {
     background: linear-gradient(180deg, var(--obsidian-2) 0%, var(--obsidian) 100%);
-    padding: 1rem 2rem;
+    padding: 0.6rem 1.5rem;
     border-bottom: 3px solid var(--grass-dark);
     position: sticky;
     top: 0;
@@ -330,7 +337,9 @@ a { color: inherit; }
 }
 
 .update-modal-panel {
-    width: min(100%, 560px);
+    width: min(100%, 620px);
+    max-height: min(85vh, 680px);
+    overflow-y: auto;
     padding: 1.5rem;
     background: var(--obsidian-2);
     border: 3px solid var(--gold-dark);
@@ -350,6 +359,10 @@ a { color: inherit; }
     gap: 1rem;
     border-bottom: 2px solid var(--line);
     padding-bottom: 0.75rem;
+    position: sticky;
+    top: 0;
+    background: var(--obsidian-2);
+    z-index: 1;
 }
 
 .update-modal-header .pixel-title {
@@ -394,16 +407,33 @@ a { color: inherit; }
 }
 
 .update-notes-list {
+    list-style: none;
     display: grid;
-    gap: 0.7rem;
-    margin: 1.25rem 0 0;
-    padding-left: 1.25rem;
-    color: var(--parchment);
-    font-size: 0.85rem;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
 }
 
-.update-notes-list li::marker {
-    color: var(--gold);
+.update-notes-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    color: var(--parchment);
+    font-size: 0.8rem;
+    line-height: 1.55;
+}
+
+.update-note-icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    background: var(--slate);
+    border: 2px solid var(--line);
+    font-size: 0.85rem;
+    margin-top: -0.05rem;
 }
 
 .duel-type-picker {
@@ -519,23 +549,23 @@ a { color: inherit; }
    ============================================================ */
 main {
     max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1.5rem;
+    margin: 1rem auto;
+    padding: 0 1.25rem;
     position: relative;
     z-index: 1;
 }
 
 .view-section {
     background: var(--slate);
-    padding: 2rem;
+    padding: 1.25rem;
     border: 3px solid var(--line);
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     position: relative;
 }
 
 .pixel-border {
     border: 3px solid var(--line-soft);
-    padding: 2rem;
+    padding: 1.25rem;
     background: var(--obsidian-2);
 }
 
@@ -543,11 +573,11 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     flex-wrap: wrap;
     gap: 1rem;
     border-bottom: 2px solid var(--line);
-    padding-bottom: 1rem;
+    padding-bottom: 0.6rem;
 }
 
 .view-header h2 {
@@ -575,7 +605,7 @@ main {
     font-weight: 700;
     font-size: 0.9rem;
     color: var(--diamond);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .pixel-label {
@@ -624,7 +654,7 @@ main {
    FORM GROUPS & INPUTS
    ============================================================ */
 .form-group {
-    margin-bottom: 1.2rem;
+    margin-bottom: 0.6rem;
 }
 
 .pixel-input {
@@ -750,7 +780,7 @@ select.pixel-input {
    ============================================================ */
 .pixel-card {
     background: var(--obsidian-2);
-    padding: 1.5rem;
+    padding: 0.85rem;
     border: 2px solid var(--line);
 }
 
@@ -759,16 +789,16 @@ select.pixel-input {
    ============================================================ */
 .pixel-list {
     list-style: none;
-    margin-top: 1rem;
-    max-height: 300px;
+    margin-top: 0.4rem;
+    max-height: 280px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.35rem;
 }
 
 .pixel-list li {
-    padding: 0.8rem 1rem;
+    padding: 0.45rem 0.65rem;
     background: var(--obsidian);
     border: 2px solid var(--line-soft);
     display: flex;
@@ -800,9 +830,9 @@ select.pixel-input {
     align-items: flex-start;
     flex-wrap: wrap;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
     border-bottom: 2px solid var(--line);
-    padding-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
 }
 
 .game-top-bar .pixel-title {
@@ -818,33 +848,51 @@ select.pixel-input {
 }
 
 .game-area {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 1.5rem;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
 }
 
-.game-video-section,
+.game-video-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 640px;
+}
+
 .game-controls-section {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 640px;
 }
 
 .controls-panel {
     background: var(--obsidian-2);
     border: 2px solid var(--line);
-    padding: 1.5rem;
+    padding: 0.85rem 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.35rem;
 }
 
 .controls-header {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.15rem;
+    text-align: center;
 }
 
 .controls-footer {
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+/* Buttons pinned to the top of the controls panel, centered */
+.button-row-top {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--line-soft);
 }
 
 .video-wrapper {
@@ -852,12 +900,20 @@ select.pixel-input {
     background: #000;
     border: 2px solid var(--line);
     overflow: hidden;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.6rem;
+    width: 100%;
+}
+
+/* Bigger, more prominent video frame with a gold glow */
+.video-wrapper-large {
+    border: 3px solid var(--gold);
+    border-radius: 6px;
+    box-shadow: 0 0 14px rgba(227, 178, 60, 0.35), 0 0 30px rgba(227, 178, 60, 0.12);
 }
 
 .game-video {
     width: 100%;
-    max-height: 450px;
+    max-height: 360px;
     background: #000;
     display: block;
 }
@@ -871,19 +927,19 @@ select.pixel-input {
 
 .game-options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 0.75rem;
-    margin: 0.75rem 0 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.4rem;
+    margin: 0.4rem 0 0.5rem;
 }
 
 .game-options button {
     font-family: var(--font-mono);
     font-weight: 700;
-    padding: 0.9rem;
+    padding: 0.55rem;
     border: 2px solid var(--line);
     background: var(--obsidian);
     color: var(--parchment);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: transform 0.08s, border-color 0.15s, background 0.15s;
 }
@@ -913,13 +969,13 @@ select.pixel-input {
 }
 
 .game-status {
-    padding: 1rem;
+    padding: 0.5rem;
     text-align: center;
-    font-size: 0.8rem;
-    margin: 1rem 0;
+    font-size: 0.75rem;
+    margin: 0.5rem 0;
     background: var(--obsidian);
     border: 2px solid var(--line);
-    min-height: 56px;
+    min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1057,13 +1113,14 @@ select.pixel-input {
 .duels-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
+    align-items: start;
 }
 
 .duels-grid > .pixel-card {
-    padding: 0;
-    border: 0;
-    background: transparent;
+    padding: 0.85rem;
+    border: 2px solid var(--line);
+    background: var(--obsidian-2);
 }
 
 @media (max-width: 768px) {
@@ -1078,8 +1135,8 @@ select.pixel-input {
     font-size: 0.65rem;
     letter-spacing: 0.5px;
     color: var(--muted);
-    margin: 1.1rem 0 0.5rem;
-    padding-top: 0.9rem;
+    margin: 0.6rem 0 0.3rem;
+    padding-top: 0.5rem;
     border-top: 2px dashed var(--line-soft);
     display: flex;
     align-items: center;
@@ -1097,7 +1154,7 @@ select.pixel-input {
 
 /* ---- row (friend / request / invite / duel) ---- */
 .duel-row {
-    padding: 0.7rem 0.85rem !important;
+    padding: 0.4rem 0.6rem !important;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1113,13 +1170,13 @@ select.pixel-input {
 
 .avatar-chip {
     flex-shrink: 0;
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-pixel);
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     background: var(--slate-light);
     color: var(--parchment-bright);
     border: 2px solid var(--line);
@@ -1468,13 +1525,13 @@ select.pixel-input {
    ============================================================ */
 .pixel-footer {
     text-align: center;
-    padding: 2rem;
+    padding: 0.85rem;
     color: #4a5060;
     font-size: 0.75rem;
     font-family: var(--font-mono);
     font-weight: 600;
     border-top: 2px solid var(--line-soft);
-    margin-top: 2rem;
+    margin-top: 0.5rem;
 }
 
 /* ============================================================
@@ -1489,8 +1546,9 @@ select.pixel-input {
    RESPONSIVE
    ============================================================ */
 @media (max-width: 900px) {
-    .game-area {
-        grid-template-columns: 1fr;
+    .game-video-section,
+    .game-controls-section {
+        max-width: 100%;
     }
 }
 
@@ -1572,8 +1630,6 @@ select.pixel-input {
     position: relative;
     overflow: hidden;
     background: var(--obsidian);
-    border: 2px solid var(--line);
-    border-radius: 4px;
 }
 
 /* Hide top area with solid theme color */
@@ -1603,8 +1659,8 @@ select.pixel-input {
    OG CLAIM (GAME VIEW)
    ============================================================ */
 .og-claim-section {
-    margin-bottom: 1rem;
-    padding: 0.9rem 1rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0.75rem;
     background: rgba(227, 178, 60, 0.08);
     border: 2px solid var(--gold-dark);
     clip-path: polygon(
@@ -1624,13 +1680,13 @@ select.pixel-input {
     font-size: 0.62rem;
     color: var(--gold);
     letter-spacing: 0.5px;
-    margin-bottom: 0.45rem;
+    margin-bottom: 0.3rem;
 }
 
 .og-claim-count {
     font-size: 0.75rem;
     color: var(--parchment);
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.4rem;
 }
 
 .og-claim-button {
@@ -1733,5 +1789,517 @@ select.pixel-input {
 @media (max-width: 480px) {
     .badges-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   UPDATE 1.1 — everything below is new
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   UPDATE LOG (grouped by version, inside the existing modal)
+   Redesigned in Update 1.2: each version is its own card, icons
+   sit in a badge instead of fighting the default list marker.
+   ------------------------------------------------------------ */
+.update-log-version {
+    margin-bottom: 1rem;
+    padding: 1rem 1.1rem;
+    background: var(--obsidian);
+    border: 2px solid var(--line-soft);
+    border-left: 4px solid var(--line);
+}
+
+.update-log-version:last-child {
+    margin-bottom: 0;
+}
+
+.update-log-version:first-child {
+    border-left-color: var(--grass);
+    background: rgba(95, 174, 74, 0.06);
+}
+
+.update-log-version-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--line-soft);
+}
+
+.update-log-heading {
+    font-family: var(--font-pixel);
+    font-size: 0.68rem;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.update-log-badge {
+    font-family: var(--font-pixel);
+    font-size: 0.55rem;
+    letter-spacing: 0.5px;
+    color: var(--obsidian);
+    background: var(--grass);
+    border: 2px solid var(--grass-dark);
+    padding: 0.3rem 0.55rem;
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   SETTINGS PAGE — one-click theme preset swatches
+   ------------------------------------------------------------ */
+.theme-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.theme-preset-swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 0.6rem;
+    background: var(--swatch-bg, var(--obsidian));
+    border: 2px solid var(--line);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.theme-preset-swatch:hover {
+    transform: translateY(-3px);
+    border-color: var(--swatch-primary, var(--grass));
+}
+
+.theme-preset-swatch.is-active {
+    border-color: var(--swatch-accent, var(--gold));
+    box-shadow: 0 0 0 2px var(--swatch-accent, var(--gold));
+}
+
+.theme-preset-dots {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.theme-preset-dot {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0, 0, 0, 0.4);
+}
+
+.theme-preset-name {
+    font-weight: 700;
+    font-size: 0.68rem;
+    color: var(--parchment-bright);
+    text-align: center;
+}
+
+#settingsView .button-row {
+    margin-top: 0.5rem;
+}
+
+/* ------------------------------------------------------------
+   BADGE EQUIPPING
+   ------------------------------------------------------------ */
+.badge-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: stretch;
+    margin-left: auto;
+}
+
+.badge-equip-btn {
+    background: var(--diamond);
+    color: var(--obsidian);
+    border-color: var(--diamond-dark);
+}
+
+.badge-equip-btn.is-equipped {
+    background: var(--grass);
+    border-color: var(--grass-dark);
+    color: var(--obsidian);
+}
+
+.badge-equipped-tag {
+    font-family: var(--font-pixel);
+    font-size: 0.5rem;
+    color: var(--grass-bright);
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+
+.equipped-badge-chip {
+    display: inline;
+    font: inherit; /* exactly match the username's font-size/line-height/weight */
+    margin-left: 0.35em;
+    white-space: nowrap;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--parchment-bright) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: var(--gold); /* fallback for browsers without background-clip:text */
+}
+
+/* ------------------------------------------------------------
+   ACTION TOASTS — friend requests & duel invites, from anywhere
+   ------------------------------------------------------------ */
+.action-toast-stack {
+    position: fixed;
+    top: 5.5rem;
+    right: 1.25rem;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-width: min(340px, calc(100vw - 2rem));
+    pointer-events: none;
+}
+
+.action-toast {
+    pointer-events: auto;
+    background: var(--obsidian-2);
+    border: 2px solid var(--gold-dark);
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+    padding: 0.8rem 0.9rem;
+    clip-path: polygon(
+        0 var(--notch), var(--notch) var(--notch), var(--notch) 0,
+        calc(100% - var(--notch)) 0, calc(100% - var(--notch)) var(--notch), 100% var(--notch),
+        100% calc(100% - var(--notch)), calc(100% - var(--notch)) calc(100% - var(--notch)), calc(100% - var(--notch)) 100%,
+        var(--notch) 100%, var(--notch) calc(100% - var(--notch)), 0 calc(100% - var(--notch))
+    );
+    animation: actionToastIn 0.3s cubic-bezier(0.2, 0.8, 0.3, 1.2);
+}
+
+.action-toast.action-toast-out {
+    animation: actionToastOut 0.2s ease-in forwards;
+}
+
+.action-toast-message {
+    font-size: 0.78rem;
+    color: var(--parchment-bright);
+    margin-bottom: 0.6rem;
+    line-height: 1.4;
+}
+
+.action-toast-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.action-toast-dismiss {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.1rem 0.3rem;
+}
+
+.action-toast-dismiss:hover {
+    color: var(--parchment-bright);
+}
+
+@keyframes actionToastIn {
+    0% { opacity: 0; transform: translateX(40px) scale(0.96); }
+    60% { opacity: 1; transform: translateX(-4px) scale(1.01); }
+    100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes actionToastOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(40px); }
+}
+
+@media (max-width: 480px) {
+    .action-toast-stack {
+        left: 1rem;
+        right: 1rem;
+        max-width: none;
+        top: auto;
+        bottom: 1rem;
+    }
+}
+
+/* ------------------------------------------------------------
+   ANIMATION PASS
+   ------------------------------------------------------------ */
+
+/* Buttons: quick pop on click, everywhere */
+.pixel-btn,
+.pixel-btn-small,
+.badge-equip-btn,
+.theme-preset-swatch,
+.nav-link,
+.user-menu-item,
+.og-claim-button {
+    transition: transform 0.12s ease, filter 0.15s ease, box-shadow 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.pixel-btn:active,
+.badge-equip-btn:active,
+.nav-link:active,
+.user-menu-item:active {
+    transform: scale(0.95);
+}
+
+/* Card hover lift, applied broadly */
+.pixel-card,
+.duel-row,
+.badge-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.2s ease;
+}
+
+.pixel-card:hover,
+.duel-row:hover {
+    transform: translateY(-2px);
+}
+
+/* Duel result / round panels slide + scale in the moment they're rendered */
+.duel-result-panel,
+.duel-final-round,
+.duel-finished-panel {
+    animation: duelPanelIn 0.32s cubic-bezier(0.2, 0.8, 0.3, 1.1);
+}
+
+.duel-choice-card {
+    animation: duelCardIn 0.28s ease-out;
+}
+
+@keyframes duelPanelIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes duelCardIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Score / streak — retriggered via classList bump in JS */
+.score-bump {
+    animation: scorePulse 0.35s ease-out;
+}
+
+@keyframes scorePulse {
+    0% { transform: scale(1); color: var(--parchment); }
+    40% { transform: scale(1.18); color: var(--gold); }
+    100% { transform: scale(1); }
+}
+
+.streak-hot {
+    animation: streakGlow 1.1s ease-in-out infinite;
+}
+
+@keyframes streakGlow {
+    0%, 100% { text-shadow: 0 0 2px rgba(227, 178, 60, 0.3); }
+    50% { text-shadow: 0 0 10px rgba(227, 178, 60, 0.9), 0 0 18px rgba(209, 72, 61, 0.5); }
+}
+
+/* Badge claim celebration */
+.badge-claim-pop {
+    animation: badgeCelebrate 0.55s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+@keyframes badgeCelebrate {
+    0% { transform: scale(1) rotate(0deg); }
+    35% { transform: scale(1.25) rotate(-8deg); }
+    65% { transform: scale(1.1) rotate(6deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Friend request / duel invite rows: gentle pulse when freshly rendered */
+.duels-subhead + .pixel-list {
+    animation: listSettle 0.3s ease-out;
+}
+
+@keyframes listSettle {
+    from { opacity: 0.4; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .action-toast,
+    .duel-result-panel,
+    .duel-final-round,
+    .duel-finished-panel,
+    .duel-choice-card,
+    .score-bump,
+    .streak-hot,
+    .badge-claim-pop,
+    .duels-subhead + .pixel-list {
+        animation: none !important;
+    }
+}
+
+/* ============================================================
+   UPDATE 1.2 — everything below is new
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   MODERATION PANEL — tabs (Pending Clips / Suggestions) and a
+   roomier layout so mods can see more at a glance.
+   ------------------------------------------------------------ */
+#moderatorView.mod-panel .pixel-border {
+    padding: 1.5rem 1.75rem;
+}
+
+.mod-tabs {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.1rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 2px solid var(--line);
+}
+
+.mod-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--slate);
+    border: 2px solid var(--line);
+    padding: 0.6rem 1.1rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.mod-tab:hover {
+    color: var(--parchment-bright);
+    border-color: var(--line-soft);
+    background: var(--slate-light);
+}
+
+.mod-tab.active {
+    color: var(--obsidian);
+    background: var(--diamond);
+    border-color: var(--diamond-dark);
+}
+
+.mod-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.3rem;
+    padding: 0 0.35rem;
+    background: rgba(0, 0, 0, 0.28);
+    font-size: 0.65rem;
+}
+
+.mod-tab.active .mod-tab-count {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.mod-tab-panel[hidden] {
+    display: none;
+}
+
+/* Bigger viewport for the moderation lists — was capped at a
+   cramped 280px before, now scales with the screen. */
+.mod-list {
+    max-height: min(72vh, 900px);
+}
+
+.mod-clip-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    align-items: start;
+    gap: 1rem;
+}
+
+.mod-clip-list li {
+    align-items: flex-start;
+}
+
+/* ------------------------------------------------------------
+   SUGGESTIONS — player-submitted feature ideas (Update 1.2)
+   ------------------------------------------------------------ */
+.mod-suggestion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.suggestion-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+    background: var(--obsidian);
+    border: 2px solid var(--line-soft);
+    border-left: 4px solid var(--diamond-dark);
+    transition: border-color 0.15s;
+}
+
+.suggestion-card:hover {
+    border-color: var(--diamond);
+}
+
+.suggestion-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.suggestion-username {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--diamond);
+}
+
+.suggestion-date {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+}
+
+.suggestion-content {
+    font-size: 0.82rem;
+    color: var(--parchment);
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.suggestion-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-deny-suggestion {
+    background: var(--redstone-dark);
+    color: var(--parchment-bright);
+    border-color: var(--redstone-dark);
+}
+
+.btn-deny-suggestion:hover {
+    background: var(--redstone);
+    border-color: var(--redstone);
+}
+
+@media (max-width: 640px) {
+    .mod-clip-list {
+        grid-template-columns: 1fr;
+    }
+
+    #moderatorView.mod-panel .pixel-border {
+        padding: 1.1rem 1.1rem;
     }
 }

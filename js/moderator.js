@@ -1,11 +1,42 @@
-import { supabase, getCurrentUser, getYouTubeEmbedUrl, showPrompt } from './app.js';
+import { supabase, getCurrentUser, getYouTubeEmbedUrl, showPrompt, showConfirmation, showToast } from './app.js';
+
+let activeModTab = 'clips';
 
 export function initModerator() {
     loadPendingSubmissions();
-    
+    loadPendingSuggestions();
+    initModTabs();
+
     document.querySelector('[data-view="moderator"]')?.addEventListener('click', () => {
-        setTimeout(loadPendingSubmissions, 100);
+        setTimeout(() => {
+            loadPendingSubmissions();
+            loadPendingSuggestions();
+        }, 100);
     });
+}
+
+// ============================================================
+// TABS — Pending Clips / Suggestions
+// ============================================================
+function initModTabs() {
+    document.querySelectorAll('.mod-tab').forEach(button => {
+        button.onclick = () => switchModTab(button.dataset.modTab);
+    });
+}
+
+function switchModTab(tab) {
+    activeModTab = tab;
+
+    document.querySelectorAll('.mod-tab').forEach(button => {
+        const isActive = button.dataset.modTab === tab;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    const clipsPanel = document.getElementById('modTabClips');
+    const suggestionsPanel = document.getElementById('modTabSuggestions');
+    if (clipsPanel) clipsPanel.hidden = tab !== 'clips';
+    if (suggestionsPanel) suggestionsPanel.hidden = tab !== 'suggestions';
 }
 
 async function loadPendingSubmissions() {
@@ -25,13 +56,15 @@ async function loadPendingSubmissions() {
     
     const { data } = await supabase
         .from('submissions')
-        .select('*')
+        .select('*, submitter:user_id(username)')
         .eq('status', 'pending')
         .order('created_at', { ascending: true });
     
     const list = document.getElementById('pendingSubmissions');
     list.innerHTML = '';
     
+    updateModTabCount('modClipsCount', data?.length || 0);
+
     if (!data || data.length === 0) {
         list.innerHTML = '<li class="duel-empty">📋 No pending submissions</li>';
         return;
@@ -49,6 +82,9 @@ async function loadPendingSubmissions() {
         
         li.innerHTML = `
             <div style="flex:1;min-width:200px;">
+                <div style="margin-bottom:4px;">
+                    <span style="color:var(--gold);font-family:var(--font-mono);font-weight:700;font-size:0.7rem;">👤 Submitted by: ${sub.submitter?.username || 'Unknown user'}</span>
+                </div>
                 <strong style="color:var(--diamond);">${sub.tier}</strong>
                 <br>
                 <iframe src="${embedUrl}" style="width:100%;max-width:400px;height:225px;border:2px solid var(--line);border-radius:4px;margin-top:5px;" allowfullscreen></iframe>
@@ -165,4 +201,96 @@ window.denySubmission = async (id) => {
         alert('❌ Clip denied');
         loadPendingSubmissions();
     }
+};
+
+// ============================================================
+// SUGGESTIONS TAB — player feature suggestions.
+// Denying a suggestion deletes it permanently (no "denied" state
+// to keep around, unlike clip submissions).
+// ============================================================
+function updateModTabCount(elementId, count) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = count;
+    el.hidden = count === 0;
+}
+
+async function loadPendingSuggestions() {
+    const user = getCurrentUser();
+    const list = document.getElementById('pendingSuggestions');
+    if (!list) return;
+
+    if (!user) {
+        list.innerHTML = '<li>⚠️ Please login first!</li>';
+        return;
+    }
+
+    if (!user.is_moderator) {
+        list.innerHTML = '<li>⚠️ You are not a moderator!</li>';
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from('suggestions')
+        .select('*, sender:user_id(username)')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Load suggestions error:', error);
+        list.innerHTML = '<li class="duel-empty">❌ Error loading suggestions</li>';
+        return;
+    }
+
+    updateModTabCount('modSuggestionsCount', data?.length || 0);
+
+    list.innerHTML = '';
+
+    if (!data || data.length === 0) {
+        list.innerHTML = '<li class="duel-empty">💡 No suggestions yet</li>';
+        return;
+    }
+
+    for (const suggestion of data) {
+        const li = document.createElement('li');
+        li.className = 'suggestion-card';
+        const submittedAt = suggestion.created_at
+            ? new Date(suggestion.created_at).toLocaleString()
+            : '';
+
+        li.innerHTML = `
+            <div class="suggestion-card-header">
+                <span class="suggestion-username">👤 ${suggestion.sender?.username || 'Unknown user'}</span>
+                <span class="suggestion-date">${submittedAt}</span>
+            </div>
+            <p class="suggestion-content"></p>
+            <div class="suggestion-actions">
+                <button type="button" class="pixel-btn-small btn-deny-suggestion" onclick="window.denySuggestion('${suggestion.id}')">✕ DENY</button>
+            </div>
+        `;
+        // Set as text (not innerHTML) so a suggestion can't inject markup.
+        li.querySelector('.suggestion-content').textContent = suggestion.content;
+        list.appendChild(li);
+    }
+}
+
+window.denySuggestion = async (id) => {
+    const user = getCurrentUser();
+    if (!user) return alert('Please login');
+    if (!user.is_moderator) return alert('Not a moderator');
+
+    const confirmed = await showConfirmation('Deny this suggestion? It will be deleted permanently.');
+    if (!confirmed) return;
+
+    const { error } = await supabase
+        .from('suggestions')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        alert('Error: ' + error.message);
+        return;
+    }
+
+    showToast('🗑️ Suggestion denied and removed.');
+    loadPendingSuggestions();
 };

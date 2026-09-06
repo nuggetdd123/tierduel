@@ -2,6 +2,7 @@
 // DUELPLAY.JS - REALTIME HEAD-TO-HEAD DUEL GAMEPLAY
 // ============================================================
 import { supabase, getCurrentUser, getYouTubeEmbedUrl } from './app.js';
+import { getEquippedBadgeMap, equippedBadgeChip } from './bages.js';
 
 const TIER_ORDER = { HT1: 1, LT1: 2, HT2: 3, LT2: 4, HT3: 5, LT3: 6, HT4: 7, LT4: 8, HT5: 9, LT5: 10 };
 const TIER_COLORS = { HT1: '#ff6b6b', LT1: '#ff8787', HT2: '#ffa94d', LT2: '#ffc078', HT3: '#ffd43b', LT3: '#ffe066', HT4: '#69db7c', LT4: '#8ce99a', HT5: '#4dabf7', LT5: '#74c0fc' };
@@ -23,6 +24,7 @@ let cleanups = [];
 const guessOrder = new Map();
 let outcomeShownFor = null;
 let listEventsChannel = null;
+let opponentBadgeChip = '';
 
 const element = id => document.getElementById(id);
 const totalRounds = duel => duel?.clip_pool?.length || (duel?.type === 'FT5' ? 5 : 3);
@@ -30,6 +32,18 @@ const myGuess = duel => myRole === 'challenger' ? duel.challenger_guess : duel.o
 const opponentGuess = duel => myRole === 'challenger' ? duel.opponent_guess : duel.challenger_guess;
 const opponentName = duel => myRole === 'challenger' ? duel.opponent?.username : duel.challenger?.username;
 const pointsFor = difference => [100, 50, 25, 10, 5][difference] || 0;
+
+async function loadOpponentBadgeChip(duel) {
+    const opponentId = myRole === 'challenger' ? duel.opponent_id : duel.challenger_id;
+    if (!opponentId) return;
+    try {
+        const map = await getEquippedBadgeMap([opponentId]);
+        opponentBadgeChip = equippedBadgeChip(map.get(opponentId));
+    } catch (error) {
+        console.error('Opponent badge lookup error:', error);
+        opponentBadgeChip = '';
+    }
+}
 
 function getWinnerId(duel, challengerScore, opponentScore, latestResult = null) {
     if (challengerScore !== opponentScore) {
@@ -211,8 +225,10 @@ function getPreviousStreak(results, player) {
 
 async function renderState(duel) {
     if (!duel || duel.id !== activeDuelId) return;
+    const isFirstRender = !duelState;
     duelState = duel;
     myRole = duel.challenger_id === currentUser.id ? 'challenger' : 'opponent';
+    if (isFirstRender) await loadOpponentBadgeChip(duel);
     updateOpponentPresence();
     if (duel.status === 'finished') return renderFinished(duel);
 
@@ -234,7 +250,7 @@ async function renderState(duel) {
 async function renderRound(duel) {
     const round = duel.round_number || 1;
     const opponent = opponentName(duel);
-    element('duelPlayScoreboard').innerHTML = `<span class="duel-score">YOU ${myRole === 'challenger' ? duel.challenger_score : duel.opponent_score} : ${myRole === 'challenger' ? duel.opponent_score : duel.challenger_score} ${opponent}</span><span id="duelOpponentStatus" class="pixel-round">online</span><span class="pixel-round">ROUND ${round}/${totalRounds(duel)}</span>`;
+    element('duelPlayScoreboard').innerHTML = `<span class="duel-score score-bump">YOU ${myRole === 'challenger' ? duel.challenger_score : duel.opponent_score} : ${myRole === 'challenger' ? duel.opponent_score : duel.challenger_score} ${opponent}${opponentBadgeChip}</span><span id="duelOpponentStatus" class="pixel-round">online</span><span class="pixel-round">ROUND ${round}/${totalRounds(duel)}</span>`;
     if (!element('duelPlayOptions').querySelector('button') || lastResultKey !== duel.current_submission_id) {
         lastResultKey = duel.current_submission_id;
         const { data: submission, error } = await supabase.from('submissions').select('video_url').eq('id', duel.current_submission_id).single();
@@ -279,6 +295,9 @@ async function submitGuess(tier) {
         const { error } = await supabase.from('duels').update({ [field]: tier }).eq('id', activeDuelId).eq('status', 'active').is(field, null);
         if (error) throw error;
         showStatus(`✅ Guess locked in (${tier}). Waiting for opponent...`);
+        // Broadcast immediately so the opponent's client resolves the round
+        // the instant both guesses are in, instead of waiting on postgres
+        // change replication.
         await channel?.send({
             type: 'broadcast',
             event: 'duel-state-changed',
@@ -320,6 +339,9 @@ async function tryResolveRound(duel) {
         const winnerId = finished ? getWinnerId(duel, challengerScore, opponentScore, result) : null;
         const { error } = await supabase.from('duels').update({ challenger_score: challengerScore, opponent_score: opponentScore, current_submission_id: null, challenger_guess: null, opponent_guess: null, round_number: round + 1, status: finished ? 'finished' : 'active', winner_id: winnerId, round_results: [...(duel.round_results || []), result] }).eq('id', duel.id).eq('status', 'active').eq('round_number', round).eq('current_submission_id', clipId).eq('challenger_guess', duel.challenger_guess).eq('opponent_guess', duel.opponent_guess);
         if (error) throw error;
+        // Push the freshly-resolved state to the opponent immediately rather
+        // than waiting for them to receive the postgres_changes event.
+        await broadcastStateChange();
         await syncDuel();
         if (finished) await broadcastListEvent('duel-finished', { duel_id: duel.id });
     } catch (error) {
@@ -366,7 +388,7 @@ function showRoundResult(result, duel) {
                     ${tierCard(myGuessValue, myState, myPoints)}
                 </div>
                 <div class="duel-player-result">
-                    <strong>[${opponentName(duel).toUpperCase()}]</strong>
+                    <strong>[${opponentName(duel).toUpperCase()}]${opponentBadgeChip}</strong>
                     ${tierCard(otherGuessValue, otherState, otherPoints)}
                 </div>
             </div>
@@ -389,6 +411,7 @@ function scheduleAdvance() {
         try {
             const { error } = await supabase.from('duels').update({ current_submission_id: clipPool[nextIndex], current_clip_index: nextIndex + 1 }).eq('id', duelState.id).eq('status', 'active').is('current_submission_id', null);
             if (error) throw error;
+            await broadcastStateChange();
             await syncDuel();
         } catch (error) {
             console.error('Next round error:', error);
@@ -439,14 +462,14 @@ function renderFinished(duel) {
             <div class="duel-result-title">⚔️ ROUND ${lastResult.round} RESULT</div>
             <div class="duel-result-grid">
                 <div class="duel-player-result"><strong>[YOU]</strong>${finalChoice(finalGuesses.mine, myRoundPoints)}</div>
-                <div class="duel-player-result"><strong>[${opponentName(duel).toUpperCase()}]</strong>${finalChoice(finalGuesses.other, otherRoundPoints)}</div>
+                <div class="duel-player-result"><strong>[${opponentName(duel).toUpperCase()}]${opponentBadgeChip}</strong>${finalChoice(finalGuesses.other, otherRoundPoints)}</div>
             </div>
             <div class="duel-actual-tier">Actual tier: <strong>${lastResult.actual_tier}</strong></div>
             <div class="duel-result-summary">${lastResult.round_winner === null ? 'Round tied! 🤝' : lastResult.round_winner === (myRole === 'challenger' ? 'challenger' : 'opponent') ? 'You win the round! 🎉' : `${opponentName(duel)} wins the round! 🎉`}</div>
         </div>` : '';
     element('duelPlayOptions').innerHTML = `<button class="pixel-btn pixel-btn-primary" onclick="window.rematchDuel('${duel.id}')">⚔ REMATCH</button><button class="pixel-btn pixel-btn-secondary" onclick="window.stopDuelPlay()">◀ BACK TO DUELS</button>`;
     element('duelPlayScoreboard').innerHTML = '';
-    element('duelPlayStatus').innerHTML = `<div class="duel-finished-panel"><div>${won ? '🏆 YOU WON THE DUEL!' : '💀 YOU LOST THIS ONE'}</div><strong>${myScore} : ${otherScore}</strong><span>vs ${opponentName(duel)}</span>${finalRoundHtml}<div class="duel-final-points"><b>+${myRoundPoints}</b><span>LAST ROUND POINTS</span><b>+${otherRoundPoints}</b></div><div class="duel-total-points">TOTAL POINTS: ${myTotalPoints} : ${otherTotalPoints}</div></div>`;
+    element('duelPlayStatus').innerHTML = `<div class="duel-finished-panel"><div>${won ? '🏆 YOU WON THE DUEL!' : '💀 YOU LOST THIS ONE'}</div><strong>${myScore} : ${otherScore}</strong><span>vs ${opponentName(duel)}${opponentBadgeChip}</span>${finalRoundHtml}<div class="duel-final-points"><b>+${myRoundPoints}</b><span>LAST ROUND POINTS</span><b>+${otherRoundPoints}</b></div><div class="duel-total-points">TOTAL POINTS: ${myTotalPoints} : ${otherTotalPoints}</div></div>`;
     trackPresence('finished');
 }
 
@@ -459,6 +482,7 @@ export async function startDuelPlay(duelId) {
     outcomeShownFor = null;
     lastOpponentActivity = Date.now();
     resolvingRound = false;
+    opponentBadgeChip = '';
     element('duelsView').style.display = 'none';
     element('duelPlayView').style.display = 'block';
     element('duelPlayOptions').innerHTML = '';
@@ -505,6 +529,7 @@ export function stopDuelPlay() {
     currentUser = null;
     myRole = null;
     resolvingRound = false;
+    opponentBadgeChip = '';
     element('duelPlayVideo').src = '';
     element('duelPlayView').style.display = 'none';
     if (element('duelOutcomeModal')) element('duelOutcomeModal').hidden = true;

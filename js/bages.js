@@ -1,5 +1,5 @@
 // js/badges.js
-import { supabase, getCurrentUser, showToast } from './app.js';
+import { supabase, getCurrentUser, showToast, bumpAnimation, refreshUserMenuBadge } from './app.js';
 
 const OG_CLAIM_LIMIT = 100;
 let ogClaimBadge = null;
@@ -109,6 +109,50 @@ export function initOGClaim() {
     ogCountTimer = setInterval(loadOGClaimSection, 30000);
 }
 
+// ============================================================
+// EQUIPPED BADGES — shared helpers used by duels.js, friends.js,
+// and duelplay.js to show a player's equipped badge next to their name.
+// ============================================================
+
+// userIds -> { icon, name, color } for whichever badge each user has equipped.
+export async function getEquippedBadgeMap(userIds) {
+    const ids = [...new Set((userIds || []).filter(Boolean))];
+    if (!ids.length) return new Map();
+
+    const { data, error } = await supabase
+        .from('app_users')
+        .select('id, equipped_badge:equipped_badge_id(icon, name, color)')
+        .in('id', ids);
+
+    if (error) {
+        console.error('Equipped badge lookup error:', error);
+        return new Map();
+    }
+
+    const map = new Map();
+    (data || []).forEach(row => {
+        if (row.equipped_badge) map.set(row.id, row.equipped_badge);
+    });
+    return map;
+}
+
+// Turns a badge name into a short bracketed tag, e.g. "OG" -> "[OG]",
+// "Original Gangster" -> "[OG]", "Veteran" -> "[VET]".
+function badgeTag(name) {
+    const trimmed = (name || '').trim();
+    if (!trimmed) return 'BADGE';
+    const words = trimmed.split(/\s+/);
+    if (words.length > 1) return words.map(w => w[0]).join('').toUpperCase().slice(0, 4);
+    return trimmed.length <= 6 ? trimmed.toUpperCase() : trimmed.slice(0, 4).toUpperCase();
+}
+
+export function equippedBadgeChip(badge) {
+    if (!badge) return '';
+    const safeName = (badge.name || '').replace(/"/g, '&quot;');
+    // Clean text-only tag (gold-white gradient handled in CSS) — no icon, no per-badge color.
+    return `<span class="equipped-badge-chip" title="${safeName}">[${badgeTag(badge.name)}]</span>`;
+}
+
 export async function loadBadges() {
     const user = getCurrentUser();
     if (!user) {
@@ -132,12 +176,20 @@ export async function loadBadges() {
 
         if (userBadgesError) throw userBadgesError;
 
+        const { data: me, error: meError } = await supabase
+            .from('app_users')
+            .select('equipped_badge_id')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (meError) throw meError;
+
         const claimedMap = new Map();
         userBadges?.forEach(b => claimedMap.set(b.badge_id, b.claimed_at));
 
         localStorage.setItem('tierduel_badges', JSON.stringify([...claimedMap.keys()]));
 
-        renderBadgeList(badges || [], claimedMap);
+        renderBadgeList(badges || [], claimedMap, me?.equipped_badge_id || null);
 
     } catch (error) {
         console.error('Load badges error:', error);
@@ -146,7 +198,7 @@ export async function loadBadges() {
     }
 }
 
-function renderBadgeList(badges, claimedMap) {
+function renderBadgeList(badges, claimedMap, equippedBadgeId) {
     const container = document.getElementById('badgeContainer');
     if (!container) return;
 
@@ -157,6 +209,13 @@ function renderBadgeList(badges, claimedMap) {
 
     container.innerHTML = badges.map(badge => {
         const isClaimed = claimedMap.has(badge.id);
+        const isEquipped = equippedBadgeId === badge.id;
+
+        const equipButton = isClaimed
+            ? `<button type="button" class="pixel-btn-small badge-equip-btn ${isEquipped ? 'is-equipped' : ''}" onclick="window.toggleEquipBadge('${badge.id}')">
+                    ${isEquipped ? '✓ Equipped' : '⬢ Equip'}
+               </button>`
+            : '';
 
         return `
             <div class="badge-card ${isClaimed ? 'claimed' : ''}">
@@ -165,6 +224,9 @@ function renderBadgeList(badges, claimedMap) {
                     <h4>${badge.icon} ${badge.name}</h4>
                     <p>${badge.description || ''}</p>
                     <small>${isClaimed ? '✅ Claimed on ' + new Date(claimedMap.get(badge.id)).toLocaleDateString() : '🔒 Not claimed'}</small>
+                </div>
+                <div class="badge-card-actions">
+                    ${equipButton}
                 </div>
             </div>
         `;
@@ -178,7 +240,7 @@ export async function claimBadge(badgeId) {
         return;
     }
 
-    const { button } = getOGClaimEls();
+    const { button, section } = getOGClaimEls();
     if (button) button.disabled = true;
 
     try {
@@ -232,6 +294,7 @@ export async function claimBadge(badgeId) {
         localStorage.setItem('tierduel_badges', JSON.stringify(currentBadges));
 
         showToast(`🎉 You claimed the ${badge.icon} ${badge.name} badge!`);
+        bumpAnimation(section, 'badge-claim-pop');
         await loadOGClaimSection();
         loadBadges();
 
@@ -239,6 +302,39 @@ export async function claimBadge(badgeId) {
         console.error('Claim badge error:', error);
         alert(`❌ Could not claim badge: ${error.message}`);
         if (button) button.disabled = false;
+    }
+}
+
+// Equip/unequip toggles which single badge shows next to your name
+// in duels, friend lists, and duel results.
+export async function toggleEquipBadge(badgeId) {
+    const user = getCurrentUser();
+    if (!user) return alert('⚠️ Please login first!');
+
+    try {
+        const { data: current, error: currentError } = await supabase
+            .from('app_users')
+            .select('equipped_badge_id')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (currentError) throw currentError;
+
+        const nextEquippedId = current?.equipped_badge_id === badgeId ? null : badgeId;
+
+        const { error } = await supabase
+            .from('app_users')
+            .update({ equipped_badge_id: nextEquippedId })
+            .eq('id', user.id);
+
+        if (error) throw error;
+
+        showToast(nextEquippedId ? '⭐ Badge equipped!' : '⬢ Badge unequipped.');
+        loadBadges();
+        refreshUserMenuBadge();
+    } catch (error) {
+        console.error('Equip badge error:', error);
+        alert(`❌ Could not update equipped badge: ${error.message}`);
     }
 }
 
@@ -274,3 +370,4 @@ export async function addBadge(name, description, icon = '⭐', color = '#e3b23c
 
 window.claimBadge = claimBadge;
 window.addBadge = addBadge;
+window.toggleEquipBadge = toggleEquipBadge;
